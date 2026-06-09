@@ -4,90 +4,97 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **PI-308 Production Test Results App** — a browser-based replacement for an Excel-based production test reporting workflow used by Matrix TSL. Production staff currently use three Excel workbooks (IM0004, IM3214, IM6930) to record test results. The goal is a web app where they complete forms in a browser and reports are stored automatically to the company NAS.
+**PI-308 Production Test Results App** — a browser-based replacement for an Excel-based production test reporting workflow at Matrix TSL. Production staff open the app, complete a step-by-step test checklist for one product, and export the result as a JSON file.
 
-**Status:** Initial planning phase. No source code exists yet — only requirements documentation and the source Excel files.
+**Live app:** https://hadefuwa.github.io/IM-test-procedures  
+**Repo:** https://github.com/hadefuwa/IM-test-procedures (public)  
+**Author:** Hamed Adefuwa — Electrical Engineering Product Manager
 
-## Source Materials
+## Current State (v0.1 / v0.2)
 
-Three Excel workbooks in the project root define the forms to be converted:
-- `IM0004 Electrical Test Procedure.xlsx`
-- `IM3214 Electrical Test Procedure.xlsx`
-- `IM6930 Electrical Test Procedure.xlsx`
+The app is a single self-contained file: [index.html](index.html). No build step, no dependencies beyond two Google Fonts. Hosted on GitHub Pages directly from the `master` branch root.
 
-Any implementation must start with Phase 1 from `plan.md`: map all fields from these three files into `docs/form-field-mapping.md` before writing code.
+### What is built
+- Three test procedure tabs: **IM0004** (Closed Loop Systems, 51 steps), **IM3214** (Locktronics PLC LOGO Board, 26 steps), **IM6930** (PLC Fundamentals Trainer, 51 steps)
+- All step criteria sourced directly from the Excel workbooks — nothing invented
+- Header fields: Report ID (auto-generated), Date (auto-filled), Operator Name, Product Name, Serial Number, Build Reference
+- Per-step: Pass/Fail dropdown, Comments, Sign Off (click to auto-fill initials from Operator Name)
+- Overall result scoped to the active tab only — each procedure is fully independent
+- Save Draft → localStorage, Load Draft to restore
+- Export JSON → downloads `PI-308_[PROCEDURE]_[SN]_[DATE]_[ID].json`
+- Required fields banner (operator, product, serial number must be filled)
+- Matrix TSL dark logo in header; product photo card at top of each tab
+- Fully responsive
 
-## Planned Architecture
+### What is not yet built (from plan.md)
+- **Phase 7** — Backend API (Node.js/Express): no server exists, saves are local browser downloads only
+- **Phase 8** — PDF/Excel export (JSON only so far)
+- **Phase 9** — Review/summary page before final submission
+- **Phase 10** — NAS storage integration (requires backend + IT)
+- **Phase 11** — Authentication
+- **Phase 12** — Report history and search
+- **Phase 14** — Company domain deployment (`production-results.matrixtsl.co.uk` or similar)
+
+## Architecture
 
 ```
-Browser Frontend (React + Vite)
-        ↓ HTTPS
-Backend API (Node.js + Express)
-        ↓ restricted service account
-NAS folder (controlled storage)
+index.html  (all HTML + CSS + JS in one file)
+assets/
+  matrix dark.png     ← header logo (white text, for dark background)
+  matrix light.png    ← logo variant (not currently used)
+  im0004-1.png        ← product photo for IM0004 tab
+  im3214.png          ← product photo for IM3214 tab
+  IM6930.png          ← product photo for IM6930 tab
+  IM3490.png          ← spare (not currently used)
 ```
 
-**Critical constraint:** The browser must never write directly to the NAS. All saves go through the backend.
+No `package.json`, no build tooling, no backend. Everything runs client-side.
 
-## Planned Project Structure
+## Key Code Locations (index.html)
 
-```
-pi-308-production-test-app/
-├── frontend/src/          # React components, pages, styles
-├── backend/               # Express server, routes/, services/, storage/
-├── shared/pi308Schema.js  # Shared data model for one PI-308 report
-└── docs/                  # form-field-mapping.md, deployment-notes.md, etc.
-```
+- **`PROCEDURES` object** — all test step data for all three procedures. Edit this to add, remove or change steps. Each entry has `code`, `subtitle`, `image`, and `sections[]` → `steps[]` with `id` and `criteria`.
+- **`buildPanel(tab)`** — renders the product hero card and step table for a tab
+- **`activeTab`** — tracks which procedure is currently shown; scopes `updateOverall()` and `collectData()` to that tab only
+- **`autoSignOff(el)`** — click handler on Sign Off cells; derives initials from Operator Name
+- **`checkRequiredFields()`** — shows/hides the orange warning banner
+- **`exportJSON()`** — validates, calls `collectData()`, triggers browser file download
+- **`saveDraft()` / `loadDraft()`** — persists to `localStorage` under key `pi308_draft`
+- **`pi308_seq`** in localStorage — auto-incrementing report ID counter
 
-## Data Model
-
-Each completed report will follow this shape (defined in `shared/pi308Schema.js`):
+## Data Model (exported JSON)
 
 ```json
 {
+  "procedure": "IM0004",
   "reportId": "PI-308-0001",
-  "createdAt": "ISO8601 timestamp",
-  "operator": "",
-  "product": "",
-  "serialNumber": "",
-  "buildReference": "",
-  "sections": { "tab1": {}, "tab2": {}, "tab3": {} },
-  "overallResult": "",
+  "createdAt": "2026-06-09T10:30:00Z",
+  "date": "2026-06-09",
+  "operator": "Hamed Adefuwa",
+  "product": "Closed Loop Systems",
+  "serialNumber": "SN12345",
+  "buildReference": "BLD-2026-001",
+  "overallResult": "PASS",
+  "sections": {
+    "1. Documentation Verification": [
+      { "step": "1.1", "criteria": "...", "comments": "", "result": "PASS", "signOff": "HA" }
+    ]
+  },
   "comments": ""
 }
 ```
 
-## Backend API Endpoints (planned)
+## Next Milestone
 
-```
-GET  /api/health
-POST /api/reports/save-draft
-POST /api/reports/submit
-GET  /api/reports/:reportId
-```
+The logical next step is **Phase 7 — Backend API**. This requires:
+1. A Node.js/Express server (or equivalent) hosted on the company network
+2. IT to provision a hosting location with HTTPS
+3. A restricted service account with write access to the NAS results folder
+4. Replacing the current browser JSON download with a `POST /api/reports/submit` call
 
-## File Naming Convention
+Until IT requirements are confirmed, the current GitHub Pages version is usable for manual testing and process validation with production staff.
 
-```
-PI-308_[SerialNumber]_[YYYY-MM-DD]_[ReportID].json
-```
+## Fonts
 
-## Development Versions
-
-- **v0.1** — Frontend only, three form sections matching Excel tabs, local JSON export
-- **v0.2** — Backend API, server-side saving, validation, report ID generation
-- **v0.3** — PDF/Excel output, review page
-- **v0.4** — NAS save path, restricted permissions, production file naming
-- **v1.0** — Authentication, production deployment, real user testing
-
-## Key Open Questions (resolve before implementing)
-
-- Output format: JSON, PDF, Excel, CSV, or database?
-- Authentication method: simple password, Microsoft 365, or domain auth?
-- NAS access method: mapped folder, UNC path, or IT-managed upload endpoint?
-- Should reports be editable after saving?
-- Should report numbers be auto-generated?
-
-## Author
-
-Hamed Adefuwa — Electrical Engineering Product Manager
+- `Barlow Condensed` — headings, labels, badges
+- `Barlow` — body text
+- `JetBrains Mono` — step numbers, report ID display
