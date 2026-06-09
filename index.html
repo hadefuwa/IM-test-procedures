@@ -585,6 +585,9 @@
 <div class="main-content">
 
     <div class="validation-banner" id="val-banner"></div>
+    <div class="validation-banner" id="required-banner" style="background:#FFF7ED;border-color:#FED7AA;border-left-color:#F97316;color:#C2410C;">
+        <strong>Complete the header fields before starting:</strong> Operator Name, Product Name and Serial Number are required.
+    </div>
 
     <div id="panel-im0004" class="tab-panel active"></div>
     <div id="panel-im3214" class="tab-panel"></div>
@@ -903,6 +906,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     TABS.forEach(buildPanel);
     updateOverall();
+
+    // required-fields banner
+    ['operator','product','serialNumber'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById(id).classList.remove('error');
+            checkRequiredFields();
+        });
+    });
+    checkRequiredFields();
 });
 
 function nextReportId() {
@@ -957,7 +969,7 @@ function buildPanel(tab) {
                         <option value="N/A">N/A</option>
                     </select>
                 </td>
-                <td><input type="text" class="signoff-input" data-tab="${tab}" data-step="${s.id}" placeholder="Initials" maxlength="6"></td>`;
+                <td><input type="text" class="signoff-input" data-tab="${tab}" data-step="${s.id}" placeholder="Click" maxlength="6" onclick="autoSignOff(this)" title="Click to auto-fill your initials"></td>`;
             tbody.appendChild(row);
         });
 
@@ -1153,8 +1165,8 @@ function clearForm() {
     if (!confirm('Start a new report? All unsaved data will be cleared.')) return;
     ['operator','product','serialNumber','buildRef','comments'].forEach(id => {
         document.getElementById(id).value = '';
-        document.getElementById(id).classList.remove('error');
     });
+    checkRequiredFields();
     document.querySelectorAll('.result-select').forEach(sel => {
         sel.value = 'PENDING'; sel.classList.remove('v-pass','v-fail');
     });
@@ -1193,6 +1205,34 @@ function exportJSON() {
 
     document.getElementById('display-status').textContent = 'EXPORTED';
     toast('success', 'Exported: ' + filename);
+}
+
+// ── AUTO SIGN-OFF ─────────────────────────────────────────────────────────────
+function autoSignOff(el) {
+    if (el.value) return; // already has a value — don't overwrite
+    const name = document.getElementById('operator').value.trim();
+    if (!name) {
+        const opField = document.getElementById('operator');
+        opField.classList.add('error');
+        opField.focus();
+        toast('error', 'Enter Operator Name first to auto-fill sign-off');
+        return;
+    }
+    const initials = name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 4);
+    el.value = initials;
+}
+
+// ── REQUIRED FIELDS BANNER ────────────────────────────────────────────────────
+function checkRequiredFields() {
+    const missing = ['operator','product','serialNumber'].some(
+        id => !document.getElementById(id).value.trim()
+    );
+    const banner = document.getElementById('required-banner');
+    if (missing) {
+        banner.classList.add('show');
+    } else {
+        banner.classList.remove('show');
+    }
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
