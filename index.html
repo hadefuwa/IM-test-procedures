@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PI-308 Production Test Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy:        #0B1D35;
+            --navy-light:  #162B4D;
+            --navy-mid:    #1E3A5F;
+            --teal:        #00C4A0;
+            --teal-dim:    rgba(0,196,160,0.12);
+            --pass:        #10B981;
+            --pass-bg:     #ECFDF5;
+            --fail:        #EF4444;
+            --fail-bg:     #FEF2F2;
+            --pending:     #F59E0B;
+            --bg:          #EEF0F4;
+            --surface:     #FFFFFF;
+            --border:      #D4DAE4;
+            --border-light:#EAECF1;
+            --text:        #1A2535;
+            --text-mid:    #3D4F65;
+            --muted:       #7A8CA0;
+            --error:       #EF4444;
+            --error-bg:    #FEF2F2;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        /* ─── APP HEADER ─────────────────────────────────────────── */
+        .app-header { background: var(--navy); }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--navy-mid);
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 14px; }
+
+        .brand-badge {
+            background: var(--teal);
+            color: var(--navy);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            padding: 4px 10px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        .header-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: #fff;
+            letter-spacing: 0.03em;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: rgba(255,255,255,0.42);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .header-meta {
+            display: grid;
+            grid-template-columns: repeat(3, auto);
+            gap: 0;
+            border-top: 1px solid var(--navy-mid);
+        }
+
+        .meta-field {
+            padding: 10px 28px;
+            border-right: 1px solid var(--navy-mid);
+        }
+        .meta-field:last-child { border-right: none; }
+
+        .meta-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 2px;
+        }
+
+        .meta-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--teal);
+            font-weight: 500;
+        }
+
+        /* ─── REPORT INFO ────────────────────────────────────────── */
+        .report-info {
+            background: white;
+            border-bottom: 2px solid var(--border);
+            padding: 18px 28px;
+        }
+
+        .report-info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px 20px;
+        }
+
+        .field-group { display: flex; flex-direction: column; gap: 4px; }
+
+        .field-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .field-input {
+            border: 1.5px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: white;
+            transition: border-color 0.15s;
+        }
+        .field-input:focus { outline: none; border-color: var(--teal); }
+        .field-input.readonly { background: var(--bg); color: var(--text-mid); cursor: default; }
+        .field-input.error { border-color: var(--error) !important; background: var(--error-bg); }
+
+        /* ─── TAB NAV ────────────────────────────────────────────── */
+        .tab-nav {
+            background: white;
+            border-bottom: 2px solid var(--border);
+            padding: 0 28px;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 13px 22px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all 0.15s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--navy); border-bottom-color: var(--teal); }
+
+        .tab-chip {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: var(--border-light);
+            color: var(--muted);
+            font-family: 'Barlow', sans-serif;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .tab-btn.active .tab-chip { background: var(--teal-dim); color: var(--teal); }
+
+        /* ─── MAIN CONTENT ───────────────────────────────────────── */
+        .main-content {
+            padding: 22px 28px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ─── SECTION CARD ───────────────────────────────────────── */
+        .section-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 22px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .section-header {
+            background: var(--navy);
+            padding: 11px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .section-badge {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .section-badge.pass    { background: var(--pass); color: white; }
+        .section-badge.fail    { background: var(--fail); color: white; }
+        .section-badge.pending { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
+
+        /* ─── TEST TABLE ─────────────────────────────────────────── */
+        .test-table { width: 100%; border-collapse: collapse; }
+
+        .test-table thead tr {
+            background: #F8FAFC;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .test-table th {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 9px 12px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .test-table th.right { text-align: right; }
+
+        .test-table tbody tr {
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.1s;
+        }
+        .test-table tbody tr:last-child { border-bottom: none; }
+        .test-table tbody tr:hover { background: #FAFBFD; }
+
+        .test-table td { padding: 9px 12px; vertical-align: middle; }
+
+        .row-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            width: 24px;
+        }
+
+        .test-name { font-weight: 500; font-size: 13.5px; color: var(--text); }
+
+        /* ─── TABLE INPUTS ───────────────────────────────────────── */
+        .tbl-input {
+            border: 1.5px solid var(--border);
+            border-radius: 3px;
+            padding: 5px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            width: 100%;
+            background: white;
+            transition: border-color 0.15s;
+        }
+        .tbl-input:focus { outline: none; border-color: var(--teal); }
+        .tbl-input.error { border-color: var(--error); background: var(--error-bg); }
+
+        .limit-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-mid);
+            text-align: right;
+            white-space: nowrap;
+        }
+        .limit-display.na { color: var(--muted); font-style: italic; }
+
+        .unit-display {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .pf-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* ─── RESULT SELECT ──────────────────────────────────────── */
+        .result-select {
+            border: 1.5px solid var(--border);
+            border-radius: 3px;
+            padding: 5px 24px 5px 8px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            background: white;
+            color: var(--muted);
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 7px center;
+            min-width: 90px;
+            transition: all 0.15s;
+        }
+        .result-select:focus { outline: none; border-color: var(--teal); }
+        .result-select.v-pass { color: var(--pass); border-color: var(--pass); background-color: var(--pass-bg); }
+        .result-select.v-fail { color: var(--fail); border-color: var(--fail); background-color: var(--fail-bg); }
+
+        .notes-input {
+            border: 1.5px solid var(--border);
+            border-radius: 3px;
+            padding: 5px 8px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 12px;
+            color: var(--text);
+            width: 100%;
+            min-width: 110px;
+            background: white;
+            transition: border-color 0.15s;
+        }
+        .notes-input:focus { outline: none; border-color: var(--teal); }
+
+        /* ─── BOTTOM AREA ────────────────────────────────────────── */
+        .overall-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .overall-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .overall-result {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+        }
+        .overall-result.pass    { color: var(--pass); }
+        .overall-result.fail    { color: var(--fail); }
+        .overall-result.pending { color: var(--pending); }
+
+        .overall-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: right;
+        }
+
+        .comments-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .comments-card label {
+            display: block;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .comments-textarea {
+            width: 100%;
+            min-height: 76px;
+            border: 1.5px solid var(--border);
+            border-radius: 4px;
+            padding: 9px 12px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            resize: vertical;
+            transition: border-color 0.15s;
+        }
+        .comments-textarea:focus { outline: none; border-color: var(--teal); }
+
+        /* ─── ACTIONS BAR ────────────────────────────────────────── */
+        .actions-bar {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 18px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .btn {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 9px 18px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: var(--navy); color: white; }
+        .btn-primary:hover { background: var(--navy-light); }
+
+        .btn-success { background: var(--teal); color: var(--navy); }
+        .btn-success:hover { filter: brightness(0.9); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-mid);
+            border: 1.5px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--bg); border-color: #B0BCC8; }
+
+        .btn-spacer { flex: 1; }
+
+        /* ─── VALIDATION BANNER ──────────────────────────────────── */
+        .validation-banner {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            border-left: 4px solid var(--error);
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--fail);
+            display: none;
+        }
+        .validation-banner.show { display: block; }
+
+        /* ─── NOTIFICATION ───────────────────────────────────────── */
+        .notification {
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            padding: 12px 18px;
+            border-radius: 5px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999;
+            max-width: 360px;
+        }
+        .notification.show { transform: translateY(0); opacity: 1; }
+        .notification.success { background: var(--navy); color: white; border-left: 4px solid var(--teal); }
+        .notification.error   { background: #1C0A0A; color: white; border-left: 4px solid var(--fail); }
+
+        /* ─── RESPONSIVE ─────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .main-content, .header-top, .report-info { padding-left: 16px; padding-right: 16px; }
+            .report-info-grid { grid-template-columns: 1fr 1fr; }
+            .header-meta { grid-template-columns: repeat(3,1fr); }
+            .tab-nav { padding: 0 16px; }
+            .test-table th, .test-table td { padding: 8px 9px; }
+        }
+
+        @media (max-width: 640px) {
+            .report-info-grid { grid-template-columns: 1fr; }
+            .header-meta { grid-template-columns: 1fr; }
+            .meta-field { border-right: none; border-bottom: 1px solid var(--navy-mid); }
+            .overall-card { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .overall-stats { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─── HEADER ────────────────────────────────────────────────────── -->
+<header class="app-header">
+    <div class="header-top">
+        <div class="header-brand">
+            <span class="brand-badge">MATRIX TSL</span>
+            <div>
+                <div class="header-title">PI-308 Production Test Report</div>
+                <div class="header-subtitle">Electrical Test Procedure System</div>
+            </div>
+        </div>
+    </div>
+    <div class="header-meta">
+        <div class="meta-field">
+            <div class="meta-label">Report ID</div>
+            <div class="meta-value" id="display-report-id">—</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Date</div>
+            <div class="meta-value" id="display-date">—</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Status</div>
+            <div class="meta-value" id="display-status">DRAFT</div>
+        </div>
+    </div>
+</header>
+
+<!-- ─── REPORT INFO ───────────────────────────────────────────────── -->
+<div class="report-info">
+    <div class="report-info-grid">
+        <div class="field-group">
+            <label class="field-label">Report ID</label>
+            <input type="text" id="reportId" class="field-input readonly" readonly>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Date</label>
+            <input type="date" id="reportDate" class="field-input" onchange="document.getElementById('display-date').textContent=this.value">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Operator Name <span style="color:var(--fail)">*</span></label>
+            <input type="text" id="operator" class="field-input" placeholder="Enter operator name">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Product Name <span style="color:var(--fail)">*</span></label>
+            <input type="text" id="product" class="field-input" placeholder="Enter product name">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Serial Number <span style="color:var(--fail)">*</span></label>
+            <input type="text" id="serialNumber" class="field-input" placeholder="e.g. SN12345">
+        </div>
+        <div class="field-group">
+            <label class="field-label">Build Reference</label>
+            <input type="text" id="buildRef" class="field-input" placeholder="e.g. BLD-2026-001">
+        </div>
+    </div>
+</div>
+
+<!-- ─── TAB NAV ───────────────────────────────────────────────────── -->
+<div class="tab-nav">
+    <button class="tab-btn active" id="tabbtn-im0004" onclick="switchTab('im0004',this)">
+        IM0004 <span class="tab-chip" id="chip-im0004">8</span>
+    </button>
+    <button class="tab-btn" id="tabbtn-im3214" onclick="switchTab('im3214',this)">
+        IM3214 <span class="tab-chip" id="chip-im3214">8</span>
+    </button>
+    <button class="tab-btn" id="tabbtn-im6930" onclick="switchTab('im6930',this)">
+        IM6930 <span class="tab-chip" id="chip-im6930">8</span>
+    </button>
+</div>
+
+<!-- ─── MAIN CONTENT ─────────────────────────────────────────────── -->
+<div class="main-content">
+
+    <div class="validation-banner" id="val-banner"></div>
+
+    <!-- IM0004 -->
+    <div id="panel-im0004" class="tab-panel active">
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-title">IM0004 — General Electrical Safety &amp; Performance</span>
+                <span class="section-badge pending" id="sbadge-im0004">PENDING</span>
+            </div>
+            <table class="test-table"><thead><tr>
+                <th>#</th><th>Test Description</th>
+                <th style="width:120px">Measured Value</th>
+                <th style="width:58px">Unit</th>
+                <th class="right" style="width:72px">Min</th>
+                <th class="right" style="width:72px">Max</th>
+                <th style="width:100px">Result</th>
+                <th>Notes</th>
+            </tr></thead><tbody id="tbody-im0004"></tbody></table>
+        </div>
+    </div>
+
+    <!-- IM3214 -->
+    <div id="panel-im3214" class="tab-panel">
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-title">IM3214 — Power Supply &amp; DC Rail Verification</span>
+                <span class="section-badge pending" id="sbadge-im3214">PENDING</span>
+            </div>
+            <table class="test-table"><thead><tr>
+                <th>#</th><th>Test Description</th>
+                <th style="width:120px">Measured Value</th>
+                <th style="width:58px">Unit</th>
+                <th class="right" style="width:72px">Min</th>
+                <th class="right" style="width:72px">Max</th>
+                <th style="width:100px">Result</th>
+                <th>Notes</th>
+            </tr></thead><tbody id="tbody-im3214"></tbody></table>
+        </div>
+    </div>
+
+    <!-- IM6930 -->
+    <div id="panel-im6930" class="tab-panel">
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-title">IM6930 — Functional &amp; Interface Verification</span>
+                <span class="section-badge pending" id="sbadge-im6930">PENDING</span>
+            </div>
+            <table class="test-table"><thead><tr>
+                <th>#</th><th>Test Description</th>
+                <th style="width:120px">Measured Value</th>
+                <th style="width:58px">Unit</th>
+                <th class="right" style="width:72px">Min</th>
+                <th class="right" style="width:72px">Max</th>
+                <th style="width:100px">Result</th>
+                <th>Notes</th>
+            </tr></thead><tbody id="tbody-im6930"></tbody></table>
+        </div>
+    </div>
+
+    <!-- Overall Result -->
+    <div class="overall-card">
+        <div>
+            <div class="overall-label">Overall Test Result</div>
+            <div class="overall-result pending" id="overall-result">PENDING</div>
+        </div>
+        <div class="overall-stats" id="overall-stats">0 / 24 tests complete</div>
+    </div>
+
+    <!-- Comments -->
+    <div class="comments-card">
+        <label for="comments">Comments &amp; Notes</label>
+        <textarea id="comments" class="comments-textarea" placeholder="Enter any additional comments, observations or notes..."></textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+        <button class="btn btn-ghost" onclick="saveDraft()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+            Save Draft
+        </button>
+        <button class="btn btn-ghost" onclick="loadDraft()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-3.81L1 10"/></svg>
+            Load Draft
+        </button>
+        <button class="btn btn-ghost" onclick="clearForm()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2 0 01-2,2H7a2,2 0 01-2-2V6m3,0V4a2,2 0 012-2h4a2,2 0 012,2v2"/></svg>
+            New Report
+        </button>
+        <div class="btn-spacer"></div>
+        <button class="btn btn-success" onclick="exportJSON()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21,15v4a2,2 0 01-2,2H5a2,2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export JSON
+        </button>
+    </div>
+</div>
+
+<!-- Notification toast -->
+<div class="notification" id="notification"></div>
+
+<script>
+// ─── TEST DEFINITIONS ────────────────────────────────────────────────────────
+const TESTS = {
+    im0004: [
+        { name: 'Mains Supply Voltage',          unit: 'V AC',  min: 207,  max: 253   },
+        { name: 'Earth Continuity Resistance',   unit: 'Ω',     min: 0,    max: 0.1   },
+        { name: 'Insulation Resistance (L–E)',   unit: 'MΩ',    min: 1.0,  max: null  },
+        { name: 'Insulation Resistance (N–E)',   unit: 'MΩ',    min: 1.0,  max: null  },
+        { name: 'No-Load Input Current',         unit: 'mA',    min: 0,    max: 500   },
+        { name: 'Full-Load Input Current',       unit: 'A',     min: 0,    max: 5.0   },
+        { name: 'Power Factor',                  unit: 'p.f.',  min: 0.85, max: 1.0   },
+        { name: 'Functional Operation Test',     unit: '—',     min: null, max: null  },
+    ],
+    im3214: [
+        { name: 'Input Voltage (DC Rail)',       unit: 'V DC',  min: 11.5, max: 12.5  },
+        { name: 'Output Voltage — Rail 1 (5V)',  unit: 'V DC',  min: 4.85, max: 5.15  },
+        { name: 'Output Voltage — Rail 2 (12V)', unit: 'V DC',  min: 11.8, max: 12.2  },
+        { name: 'Output Voltage — Rail 3 (3V3)', unit: 'V DC',  min: 3.25, max: 3.35  },
+        { name: 'Quiescent Current Draw',        unit: 'mA',    min: 0,    max: 100   },
+        { name: 'Output Ripple Voltage',         unit: 'mV pp', min: 0,    max: 50    },
+        { name: 'Short Circuit Protection',      unit: '—',     min: null, max: null  },
+        { name: 'Load Regulation',               unit: '%',     min: 0,    max: 5.0   },
+    ],
+    im6930: [
+        { name: 'PCB Visual Inspection',         unit: '—',     min: null, max: null  },
+        { name: 'Component Values Check',        unit: '—',     min: null, max: null  },
+        { name: 'Track Continuity (critical)',   unit: 'Ω',     min: 0,    max: 1.0   },
+        { name: 'Power-On Sequence Test',        unit: '—',     min: null, max: null  },
+        { name: 'Analogue Input Accuracy',       unit: 'mV',    min: 0,    max: 10    },
+        { name: 'Digital I/O Function',          unit: '—',     min: null, max: null  },
+        { name: 'Communication Bus (RS-485)',    unit: '—',     min: null, max: null  },
+        { name: 'Final Calibration Check',       unit: '%',     min: 0,    max: 0.5   },
+    ],
+};
+
+const TABS = ['im0004', 'im3214', 'im6930'];
+let currentReportId;
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    currentReportId = nextReportId();
+    document.getElementById('reportId').value = currentReportId;
+    document.getElementById('display-report-id').textContent = currentReportId;
+
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('reportDate').value = today;
+    document.getElementById('display-date').textContent = today;
+
+    TABS.forEach(buildTable);
+    updateOverall();
+});
+
+function nextReportId() {
+    const n = parseInt(localStorage.getItem('pi308_seq') || '0') + 1;
+    localStorage.setItem('pi308_seq', n);
+    return 'PI-308-' + String(n).padStart(4, '0');
+}
+
+// ─── BUILD TABLE ──────────────────────────────────────────────────────────────
+function buildTable(tab) {
+    const tbody = document.getElementById(`tbody-${tab}`);
+    TESTS[tab].forEach((t, i) => {
+        const isPF = (t.min === null && t.max === null);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="row-num">${i + 1}</span></td>
+            <td><span class="test-name">${t.name}</span></td>
+            <td>${isPF
+                ? `<span class="pf-label">Pass / Fail</span>`
+                : `<input type="number" step="any" placeholder="—"
+                       class="tbl-input meas-input"
+                       data-tab="${tab}" data-idx="${i}"
+                       oninput="onMeasured(this,'${tab}',${i})">`
+            }</td>
+            <td><span class="unit-display">${t.unit}</span></td>
+            <td class="limit-display ${isPF ? 'na' : ''}" style="text-align:right">
+                ${t.min !== null ? t.min : '—'}
+            </td>
+            <td class="limit-display ${isPF ? 'na' : ''}" style="text-align:right">
+                ${t.max !== null ? t.max : '—'}
+            </td>
+            <td>
+                <select class="result-select" data-tab="${tab}" data-idx="${i}"
+                    onchange="onResult(this,'${tab}',${i})">
+                    <option value="PENDING">Pending</option>
+                    <option value="PASS">PASS</option>
+                    <option value="FAIL">FAIL</option>
+                    <option value="N/A">N/A</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="notes-input"
+                    data-tab="${tab}" data-idx="${i}" placeholder="Notes...">
+            </td>`;
+        tbody.appendChild(row);
+    });
+}
+
+// ─── TAB SWITCH ───────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+    TABS.forEach(t => {
+        document.getElementById(`panel-${t}`).classList.remove('active');
+        document.getElementById(`tabbtn-${t}`).classList.remove('active');
+    });
+    document.getElementById(`panel-${tab}`).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ─── AUTO-CALCULATE RESULT ────────────────────────────────────────────────────
+function onMeasured(input, tab, idx) {
+    const t = TESTS[tab][idx];
+    const v = parseFloat(input.value);
+    const sel = document.querySelector(`.result-select[data-tab="${tab}"][data-idx="${idx}"]`);
+
+    if (isNaN(v)) {
+        sel.value = 'PENDING';
+    } else {
+        let pass = true;
+        if (t.min !== null && v < t.min) pass = false;
+        if (t.max !== null && v > t.max) pass = false;
+        sel.value = pass ? 'PASS' : 'FAIL';
+    }
+    styleResult(sel);
+    updateSection(tab);
+    updateOverall();
+}
+
+function onResult(sel, tab) {
+    styleResult(sel);
+    updateSection(tab);
+    updateOverall();
+}
+
+function styleResult(sel) {
+    sel.classList.remove('v-pass', 'v-fail');
+    if (sel.value === 'PASS') sel.classList.add('v-pass');
+    if (sel.value === 'FAIL') sel.classList.add('v-fail');
+}
+
+// ─── SECTION BADGE ────────────────────────────────────────────────────────────
+function updateSection(tab) {
+    const results = Array.from(
+        document.querySelectorAll(`.result-select[data-tab="${tab}"]`)
+    ).map(s => s.value);
+
+    const badge = document.getElementById(`sbadge-${tab}`);
+    document.getElementById(`chip-${tab}`).textContent = results.length;
+
+    if (results.some(r => r === 'FAIL')) {
+        badge.textContent = 'FAIL'; badge.className = 'section-badge fail';
+    } else if (results.every(r => r === 'PASS' || r === 'N/A')) {
+        badge.textContent = 'PASS'; badge.className = 'section-badge pass';
+    } else {
+        badge.textContent = 'PENDING'; badge.className = 'section-badge pending';
+    }
+}
+
+// ─── OVERALL RESULT ───────────────────────────────────────────────────────────
+function updateOverall() {
+    const all = Array.from(document.querySelectorAll('.result-select')).map(s => s.value);
+    const total    = all.length;
+    const complete = all.filter(r => r !== 'PENDING').length;
+    const failed   = all.filter(r => r === 'FAIL').length;
+    const passed   = all.filter(r => r === 'PASS' || r === 'N/A').length;
+
+    const el = document.getElementById('overall-result');
+    document.getElementById('overall-stats').textContent =
+        `${complete} / ${total} tests complete  ·  ${passed} passed  ·  ${failed} failed`;
+
+    el.classList.remove('pass', 'fail', 'pending');
+    if (failed > 0) {
+        el.textContent = 'FAIL'; el.classList.add('fail');
+        document.getElementById('display-status').textContent = 'FAIL';
+    } else if (complete === total) {
+        el.textContent = 'PASS'; el.classList.add('pass');
+        document.getElementById('display-status').textContent = 'PASS';
+    } else {
+        el.textContent = 'PENDING'; el.classList.add('pending');
+        document.getElementById('display-status').textContent = 'DRAFT';
+    }
+
+    TABS.forEach(updateSection);
+}
+
+// ─── COLLECT DATA ─────────────────────────────────────────────────────────────
+function collectData() {
+    const sections = {};
+    TABS.forEach(tab => {
+        sections[tab] = TESTS[tab].map((t, i) => ({
+            name:          t.name,
+            unit:          t.unit,
+            min:           t.min,
+            max:           t.max,
+            measuredValue: (() => {
+                const el = document.querySelector(`.meas-input[data-tab="${tab}"][data-idx="${i}"]`);
+                return el ? el.value : null;
+            })(),
+            result: document.querySelector(`.result-select[data-tab="${tab}"][data-idx="${i}"]`).value,
+            notes:  document.querySelector(`.notes-input[data-tab="${tab}"][data-idx="${i}"]`).value,
+        }));
+    });
+
+    return {
+        reportId:       document.getElementById('reportId').value,
+        createdAt:      new Date().toISOString(),
+        date:           document.getElementById('reportDate').value,
+        operator:       document.getElementById('operator').value,
+        product:        document.getElementById('product').value,
+        serialNumber:   document.getElementById('serialNumber').value,
+        buildReference: document.getElementById('buildRef').value,
+        sections,
+        overallResult:  document.getElementById('overall-result').textContent,
+        comments:       document.getElementById('comments').value,
+    };
+}
+
+// ─── VALIDATE ─────────────────────────────────────────────────────────────────
+function validate() {
+    const required = ['operator', 'product', 'serialNumber'];
+    const missing = [];
+    required.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+            el.classList.add('error');
+            missing.push(el.previousElementSibling.textContent.replace(' *', '').trim());
+        } else {
+            el.classList.remove('error');
+        }
+    });
+
+    const banner = document.getElementById('val-banner');
+    if (missing.length) {
+        banner.textContent = 'Required fields missing: ' + missing.join(', ');
+        banner.classList.add('show');
+        setTimeout(() => banner.classList.remove('show'), 5000);
+        return false;
+    }
+    banner.classList.remove('show');
+    return true;
+}
+
+// ─── SAVE / LOAD DRAFT ────────────────────────────────────────────────────────
+function saveDraft() {
+    localStorage.setItem('pi308_draft', JSON.stringify(collectData()));
+    toast('success', 'Draft saved to browser storage');
+}
+
+function loadDraft() {
+    const raw = localStorage.getItem('pi308_draft');
+    if (!raw) { toast('error', 'No saved draft found'); return; }
+    const d = JSON.parse(raw);
+
+    document.getElementById('reportId').value = d.reportId || '';
+    document.getElementById('display-report-id').textContent = d.reportId || '—';
+    document.getElementById('reportDate').value = d.date || '';
+    document.getElementById('display-date').textContent = d.date || '—';
+    document.getElementById('operator').value = d.operator || '';
+    document.getElementById('product').value = d.product || '';
+    document.getElementById('serialNumber').value = d.serialNumber || '';
+    document.getElementById('buildRef').value = d.buildReference || '';
+    document.getElementById('comments').value = d.comments || '';
+
+    if (d.sections) {
+        TABS.forEach(tab => {
+            (d.sections[tab] || []).forEach((row, i) => {
+                const m = document.querySelector(`.meas-input[data-tab="${tab}"][data-idx="${i}"]`);
+                const r = document.querySelector(`.result-select[data-tab="${tab}"][data-idx="${i}"]`);
+                const n = document.querySelector(`.notes-input[data-tab="${tab}"][data-idx="${i}"]`);
+                if (m && row.measuredValue !== null) m.value = row.measuredValue;
+                if (r) { r.value = row.result; styleResult(r); }
+                if (n) n.value = row.notes || '';
+            });
+        });
+    }
+    updateOverall();
+    toast('success', 'Draft loaded successfully');
+}
+
+// ─── CLEAR FORM ───────────────────────────────────────────────────────────────
+function clearForm() {
+    if (!confirm('Start a new report? All unsaved data will be cleared.')) return;
+    ['operator', 'product', 'serialNumber', 'buildRef', 'comments'].forEach(id => {
+        document.getElementById(id).value = '';
+        document.getElementById(id).classList.remove('error');
+    });
+    document.querySelectorAll('.meas-input').forEach(el => el.value = '');
+    document.querySelectorAll('.result-select').forEach(sel => {
+        sel.value = 'PENDING';
+        sel.classList.remove('v-pass', 'v-fail');
+    });
+    document.querySelectorAll('.notes-input').forEach(el => el.value = '');
+
+    currentReportId = nextReportId();
+    document.getElementById('reportId').value = currentReportId;
+    document.getElementById('display-report-id').textContent = currentReportId;
+
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('reportDate').value = today;
+    document.getElementById('display-date').textContent = today;
+    document.getElementById('display-status').textContent = 'DRAFT';
+
+    updateOverall();
+    toast('success', 'New report started — ' + currentReportId);
+}
+
+// ─── EXPORT JSON ──────────────────────────────────────────────────────────────
+function exportJSON() {
+    if (!validate()) return;
+
+    const data = collectData();
+    const sn   = (data.serialNumber || 'UNKNOWN').replace(/[^\w-]/g, '');
+    const date = data.date || new Date().toISOString().slice(0, 10);
+    const id   = data.reportId.replace(/[^\w-]/g, '');
+    const filename = `PI-308_${sn}_${date}_${id}.json`;
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+
+    document.getElementById('display-status').textContent = 'EXPORTED';
+    toast('success', 'Exported: ' + filename);
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(type, msg) {
+    const icons = {
+        success: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`,
+        error:   `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    };
+    const el = document.getElementById('notification');
+    el.className = `notification ${type}`;
+    el.innerHTML = icons[type] + msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+
+</body>
+</html>
