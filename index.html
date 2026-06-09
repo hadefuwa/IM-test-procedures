@@ -48,17 +48,53 @@
             gap: 14px;
         }
 
-        .brand-badge {
-            background: var(--teal);
-            color: var(--navy);
+        .header-logo {
+            height: 36px;
+            width: auto;
+            flex-shrink: 0;
+        }
+
+        /* ── PRODUCT HERO ────────────────────────────────────── */
+        .product-hero {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        .product-hero-info {
+            padding: 20px 24px;
+            flex: 1;
+        }
+
+        .product-hero-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--teal);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .product-hero-name {
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 700;
-            font-size: 12px;
-            letter-spacing: 0.1em;
-            padding: 4px 10px;
-            border-radius: 3px;
-            white-space: nowrap;
+            font-size: 22px;
+            color: var(--navy);
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+        }
+
+        .product-hero-img {
+            height: 140px;
+            width: auto;
+            object-fit: contain;
             flex-shrink: 0;
+            padding: 12px 20px 12px 0;
         }
 
         .header-title {
@@ -515,7 +551,7 @@
 <!-- ── HEADER ──────────────────────────────────────────────────── -->
 <header class="app-header">
     <div class="header-top">
-        <span class="brand-badge">MATRIX TSL</span>
+        <img src="assets/matrix dark.png" alt="Matrix TSL" class="header-logo">
         <div>
             <div class="header-title">PI-308 Production Test Report</div>
             <div class="header-subtitle">Electrical Test Procedure System</div>
@@ -639,6 +675,7 @@ const PROCEDURES = {
     im0004: {
         code: 'IM0004',
         subtitle: 'Maintenance on Closed Loop Systems',
+        image: 'im0004-1.png',
         sections: [
             {
                 title: '1. Documentation Verification',
@@ -732,6 +769,7 @@ const PROCEDURES = {
     im3214: {
         code: 'IM3214',
         subtitle: 'Locktronics — PLC LOGO Board',
+        image: 'im3214.png',
         sections: [
             {
                 title: '1. Documentation Verification',
@@ -800,6 +838,7 @@ const PROCEDURES = {
     im6930: {
         code: 'IM6930',
         subtitle: 'PLC Fundamentals Trainer',
+        image: 'IM6930.png',
         sections: [
             {
                 title: '1. Documentation Verification',
@@ -928,6 +967,17 @@ function buildPanel(tab) {
     const proc  = PROCEDURES[tab];
     const panel = document.getElementById(`panel-${tab}`);
     panel.innerHTML = '';
+
+    // Product hero card
+    const hero = document.createElement('div');
+    hero.className = 'product-hero';
+    hero.innerHTML = `
+        <div class="product-hero-info">
+            <div class="product-hero-code">${proc.code}</div>
+            <div class="product-hero-name">${proc.subtitle}</div>
+        </div>
+        <img src="assets/${proc.image}" alt="${proc.subtitle}" class="product-hero-img">`;
+    panel.appendChild(hero);
 
     proc.sections.forEach(sec => {
         const card = document.createElement('div');
