@@ -632,7 +632,7 @@
     <!-- Overall Result -->
     <div class="overall-card">
         <div>
-            <div class="overall-label">Overall Test Result</div>
+            <div class="overall-label" id="overall-label">IM0004 Result</div>
             <div class="overall-result pending" id="overall-result">PENDING</div>
         </div>
         <div class="overall-stats" id="overall-stats"></div>
@@ -932,6 +932,7 @@ const PROCEDURES = {
 
 const TABS = ['im0004', 'im3214', 'im6930'];
 let currentReportId;
+let activeTab = 'im0004';
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -1039,6 +1040,8 @@ function switchTab(tab, btn) {
     });
     document.getElementById(`panel-${tab}`).classList.add('active');
     btn.classList.add('active');
+    activeTab = tab;
+    updateOverall();
 }
 
 // ── RESULT CHANGE ─────────────────────────────────────────────────────────────
@@ -1082,7 +1085,8 @@ function updateChip(tab) {
 
 // ── OVERALL RESULT ────────────────────────────────────────────────────────────
 function updateOverall() {
-    const all      = Array.from(document.querySelectorAll('.result-select'));
+    // Only count steps for the currently active procedure
+    const all      = Array.from(document.querySelectorAll(`.result-select[data-tab="${activeTab}"]`));
     const total    = all.length;
     const complete = all.filter(s => s.value !== 'PENDING').length;
     const failed   = all.filter(s => s.value === 'FAIL').length;
@@ -1090,7 +1094,9 @@ function updateOverall() {
 
     const el    = document.getElementById('overall-result');
     const stats = document.getElementById('overall-stats');
+    const label = document.getElementById('overall-label');
 
+    if (label) label.textContent = `${activeTab.toUpperCase()} Result`;
     stats.innerHTML = `${complete} / ${total} steps complete<br>${passed} passed &nbsp;·&nbsp; ${failed} failed`;
 
     el.classList.remove('pass', 'fail', 'pending');
@@ -1105,31 +1111,31 @@ function updateOverall() {
         document.getElementById('display-status').textContent = 'DRAFT';
     }
 
-    // refresh all section badges
-    TABS.forEach(tab => {
-        PROCEDURES[tab].sections.forEach(sec => {
-            updateSection(tab, sec.title.split('.')[0].trim());
-        });
+    // refresh section badges for active tab only
+    PROCEDURES[activeTab].sections.forEach(sec => {
+        updateSection(activeTab, sec.title.split('.')[0].trim());
     });
 }
 
 // ── COLLECT DATA ──────────────────────────────────────────────────────────────
 function collectData() {
+    // Only collect data for the active procedure
+    const tab      = activeTab;
+    const proc     = PROCEDURES[tab];
     const sections = {};
-    TABS.forEach(tab => {
-        sections[tab] = {};
-        PROCEDURES[tab].sections.forEach(sec => {
-            sections[tab][sec.title] = sec.steps.map(s => ({
-                step:     s.id,
-                criteria: s.criteria,
-                comments: (document.querySelector(`.comments-cell-input[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || '',
-                result:   (document.querySelector(`.result-select[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || 'PENDING',
-                signOff:  (document.querySelector(`.signoff-input[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || '',
-            }));
-        });
+
+    proc.sections.forEach(sec => {
+        sections[sec.title] = sec.steps.map(s => ({
+            step:     s.id,
+            criteria: s.criteria,
+            comments: (document.querySelector(`.comments-cell-input[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || '',
+            result:   (document.querySelector(`.result-select[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || 'PENDING',
+            signOff:  (document.querySelector(`.signoff-input[data-tab="${tab}"][data-step="${s.id}"]`) || {}).value || '',
+        }));
     });
 
     return {
+        procedure:      tab.toUpperCase(),
         reportId:       document.getElementById('reportId').value,
         createdAt:      new Date().toISOString(),
         date:           document.getElementById('reportDate').value,
@@ -1245,7 +1251,7 @@ function exportJSON() {
     const sn       = (data.serialNumber || 'UNKNOWN').replace(/[^\w-]/g,'');
     const date     = data.date || new Date().toISOString().slice(0,10);
     const id       = data.reportId.replace(/[^\w-]/g,'');
-    const filename = `PI-308_${sn}_${date}_${id}.json`;
+    const filename = `PI-308_${data.procedure}_${sn}_${date}_${id}.json`;
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
